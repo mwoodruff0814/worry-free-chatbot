@@ -81,15 +81,18 @@ const FlowController = () => {
         `Great! Let me help you with ${serviceNames[value]} - this won't take long!`
       ];
       addBotMessage(responses[Math.floor(Math.random() * responses.length)], 30);
-      setTimeout(() => {
-        const dateQuestions = [
-          "When are you thinking? What date works best for your service? 📅",
-          "Let's pick a date - when would be ideal for you? 📆",
-          "When would you like to schedule this? Pick any date that works! 🗓️"
-        ];
-        addBotMessage(dateQuestions[Math.floor(Math.random() * dateQuestions.length)], 50);
-        updateStage(STAGES.MOVING_DATE);
-      }, 90);
+
+      if (value === 'single') {
+        updateStage(STAGES.LOCATION_FROM);
+        setTimeout(() => {
+          addBotMessage("Alright, where are we picking up this item from? 💡 Just start typing and I'll suggest addresses!", 25);
+        }, 25);
+      } else {
+        updateStage(STAGES.PEST_DISCLAIMER);
+        setTimeout(() => {
+          addBotMessage("Quick pause - I need to show you something important before we continue:", 25);
+        }, 25);
+      }
     }
   }, [updateChatData, addBotMessage, updateStage]);
 
@@ -125,18 +128,16 @@ const FlowController = () => {
       }, 50);
     }
 
-    if (chatState.data.serviceType === 'single') {
-      updateStage(STAGES.LOCATION_FROM);
-      setTimeout(() => {
-        addBotMessage("Alright, where are we picking up this item from? 💡 Just start typing and I'll suggest addresses!", 25);
-      }, 25);
-    } else {
-      updateStage(STAGES.PEST_DISCLAIMER);
-      setTimeout(() => {
-        addBotMessage("Quick pause - I need to show you something important before we continue:", 25);
-      }, 25);
-    }
-  }, [updateChatData, addBotMessage, updateStage, chatState.data.serviceType]);
+    setTimeout(() => {
+      const serviceQuestions = [
+        "So, what brings you here today? What kind of service can I help you with?",
+        "What type of service are you looking for today?",
+        "What can I help you with - are you planning a move, or do you need something else?"
+      ];
+      addBotMessage(serviceQuestions[Math.floor(Math.random() * serviceQuestions.length)], 50);
+      updateStage(STAGES.SERVICE_SELECTION);
+    }, 25);
+  }, [updateChatData, addBotMessage, updateStage]);
 
   // Handler for pest disclaimer
   const handlePestDisclaimer = useCallback((value) => {
@@ -1737,13 +1738,13 @@ const FlowController = () => {
     addBotMessage("Perfect! ✓", 30);
 
     setTimeout(() => {
-      const serviceQuestions = [
-        "So, what brings you here today? What kind of service can I help you with?",
-        "What type of service are you looking for today?",
-        "What can I help you with - are you planning a move, or do you need something else?"
+      const dateQuestions = [
+        "When are you thinking? What date works best for your service? 📅",
+        "Let's pick a date - when would be ideal for you? 📆",
+        "When would you like to schedule this? Pick any date that works! 🗓️"
       ];
-      addBotMessage(serviceQuestions[Math.floor(Math.random() * serviceQuestions.length)], 50);
-      updateStage(STAGES.SERVICE_SELECTION);
+      addBotMessage(dateQuestions[Math.floor(Math.random() * dateQuestions.length)], 50);
+      updateStage(STAGES.MOVING_DATE);
     }, 25);
   }, [updateChatData, addBotMessage, updateStage]);
 
