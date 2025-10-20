@@ -16,32 +16,37 @@ const EstimateModal = ({ estimate, serviceType, onClose, onEmailEstimate, onBook
   };
 
   return (
-    <div style={{
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      background: 'rgba(0, 0, 0, 0.7)',
-      zIndex: 1000000,
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: '20px'
-    }}
-    onClick={onClose}
-    >
-      <div style={{
-        background: 'white',
-        borderRadius: '20px',
-        maxWidth: '600px',
-        width: '100%',
-        maxHeight: '90vh',
-        boxShadow: '0 20px 60px rgba(0,0,0,0.5)',
+    <div
+      className="estimate-modal-overlay"
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        background: 'rgba(0, 0, 0, 0.7)',
+        zIndex: 1000000,
         display: 'flex',
-        flexDirection: 'column'
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '20px'
       }}
-      onClick={(e) => e.stopPropagation()}
+      onClick={onClose}
+    >
+      <div
+        className="estimate-modal-content"
+        style={{
+          background: 'white',
+          borderRadius: '20px',
+          maxWidth: '600px',
+          width: '100%',
+          maxHeight: '85vh',
+          boxShadow: '0 20px 60px rgba(0,0,0,0.5)',
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'hidden'
+        }}
+        onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
         <div style={{

@@ -88,6 +88,29 @@
   .chat-button-text {
     font-size: 14px;
   }
+
+  /* Estimate Modal Mobile Fixes */
+  .estimate-modal-overlay {
+    padding: 10px !important;
+    align-items: flex-end !important;
+  }
+
+  .estimate-modal-content {
+    maxHeight: 95vh !important;
+    border-radius: 20px 20px 0 0 !important;
+  }
+
+  .estimate-modal-content > div:first-child {
+    padding: 15px 20px 10px 20px !important;
+  }
+
+  .estimate-modal-content > div:nth-child(2) {
+    padding: 0 20px !important;
+  }
+
+  .estimate-modal-content > div:last-child {
+    padding: 15px 20px !important;
+  }
 }
 
 /* iOS-specific fixes */
