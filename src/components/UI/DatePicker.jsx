@@ -1,5 +1,5 @@
 // FILE: src/components/UI/DatePicker.jsx
-// PURPOSE: Custom calendar date picker component for mobile
+// PURPOSE: Simple dropdown date picker that works everywhere
 
 import React, { useState } from 'react';
 import { useChatContext } from '../../context/ChatContext';
@@ -8,164 +8,117 @@ const DatePicker = ({ onDateSelected }) => {
   const { chatState } = useChatContext();
   const today = new Date();
 
-  const [currentMonth, setCurrentMonth] = useState(today.getMonth());
-  const [currentYear, setCurrentYear] = useState(today.getFullYear());
-  const [selectedDate, setSelectedDate] = useState(null);
-
-  // Determine min/max dates based on stage
-  let minDate = new Date(today);
-  let maxDate = new Date(today);
-  maxDate.setFullYear(maxDate.getFullYear() + 1);
-
-  if (chatState.stage === 'move_details_verification') {
-    minDate = new Date(today);
-    minDate.setFullYear(minDate.getFullYear() - 1);
-    maxDate = new Date(today);
-  }
+  const [selectedMonth, setSelectedMonth] = useState(today.getMonth() + 1);
+  const [selectedDay, setSelectedDay] = useState(today.getDate());
+  const [selectedYear, setSelectedYear] = useState(today.getFullYear());
 
   const monthNames = [
     'January', 'February', 'March', 'April', 'May', 'June',
     'July', 'August', 'September', 'October', 'November', 'December'
   ];
 
-  const daysInMonth = (month, year) => {
-    return new Date(year, month + 1, 0).getDate();
-  };
-
-  const firstDayOfMonth = (month, year) => {
-    return new Date(year, month, 1).getDay();
-  };
-
-  const isDateDisabled = (day) => {
-    const date = new Date(currentYear, currentMonth, day);
-    return date < minDate || date > maxDate;
-  };
-
-  const isToday = (day) => {
-    return day === today.getDate() &&
-           currentMonth === today.getMonth() &&
-           currentYear === today.getFullYear();
-  };
-
-  const isSelected = (day) => {
-    return selectedDate &&
-           day === selectedDate.getDate() &&
-           currentMonth === selectedDate.getMonth() &&
-           currentYear === selectedDate.getFullYear();
-  };
-
-  const handleDayClick = (day) => {
-    if (!isDateDisabled(day)) {
-      setSelectedDate(new Date(currentYear, currentMonth, day));
-    }
-  };
-
-  const handlePrevMonth = () => {
-    if (currentMonth === 0) {
-      setCurrentMonth(11);
-      setCurrentYear(currentYear - 1);
+  // Generate year options (today to 1 year from now, or 1 year ago to today for insurance)
+  const getYearOptions = () => {
+    const years = [];
+    if (chatState.stage === 'move_details_verification') {
+      // Past year for insurance claims
+      for (let i = today.getFullYear() - 1; i <= today.getFullYear(); i++) {
+        years.push(i);
+      }
     } else {
-      setCurrentMonth(currentMonth - 1);
+      // Future year for moving dates
+      for (let i = today.getFullYear(); i <= today.getFullYear() + 1; i++) {
+        years.push(i);
+      }
     }
+    return years;
   };
 
-  const handleNextMonth = () => {
-    if (currentMonth === 11) {
-      setCurrentMonth(0);
-      setCurrentYear(currentYear + 1);
-    } else {
-      setCurrentMonth(currentMonth + 1);
+  // Get days in selected month
+  const getDaysInMonth = () => {
+    return new Date(selectedYear, selectedMonth, 0).getDate();
+  };
+
+  // Generate day options
+  const getDayOptions = () => {
+    const days = [];
+    const maxDays = getDaysInMonth();
+    for (let i = 1; i <= maxDays; i++) {
+      days.push(i);
     }
+    return days;
   };
 
   const handleConfirm = () => {
-    if (selectedDate) {
+    if (selectedMonth && selectedDay && selectedYear) {
+      const date = new Date(selectedYear, selectedMonth - 1, selectedDay);
       const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-      const formattedDate = selectedDate.toLocaleDateString('en-US', options);
+      const formattedDate = date.toLocaleDateString('en-US', options);
       onDateSelected(formattedDate);
     }
-  };
-
-  const renderCalendar = () => {
-    const days = [];
-    const totalDays = daysInMonth(currentMonth, currentYear);
-    const firstDay = firstDayOfMonth(currentMonth, currentYear);
-
-    // Empty cells for days before month starts
-    for (let i = 0; i < firstDay; i++) {
-      days.push(<div key={`empty-${i}`} className="calendar-day empty"></div>);
-    }
-
-    // Days of the month
-    for (let day = 1; day <= totalDays; day++) {
-      const disabled = isDateDisabled(day);
-      const isCurrentDay = isToday(day);
-      const isSelectedDay = isSelected(day);
-
-      days.push(
-        <button
-          key={day}
-          className={`calendar-day ${disabled ? 'disabled' : ''} ${isCurrentDay ? 'today' : ''} ${isSelectedDay ? 'selected' : ''}`}
-          onClick={() => handleDayClick(day)}
-          disabled={disabled}
-        >
-          {day}
-        </button>
-      );
-    }
-
-    return days;
   };
 
   return (
     <div id="wfm-date-picker-container" className="date-picker-container">
       <div className="date-picker-header">Select Your Moving Date</div>
 
-      <div className="calendar-container">
-        <div className="calendar-header">
-          <button className="calendar-nav-btn" onClick={handlePrevMonth}>
-            ←
-          </button>
-          <div className="calendar-month-year">
-            {monthNames[currentMonth]} {currentYear}
-          </div>
-          <button className="calendar-nav-btn" onClick={handleNextMonth}>
-            →
-          </button>
+      <div className="dropdown-date-picker">
+        <div className="date-dropdown-group">
+          <label className="date-dropdown-label">Month</label>
+          <select
+            className="date-dropdown"
+            value={selectedMonth}
+            onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
+          >
+            {monthNames.map((month, idx) => (
+              <option key={idx} value={idx + 1}>
+                {month}
+              </option>
+            ))}
+          </select>
         </div>
 
-        <div className="calendar-weekdays">
-          <div>Sun</div>
-          <div>Mon</div>
-          <div>Tue</div>
-          <div>Wed</div>
-          <div>Thu</div>
-          <div>Fri</div>
-          <div>Sat</div>
+        <div className="date-dropdown-group">
+          <label className="date-dropdown-label">Day</label>
+          <select
+            className="date-dropdown"
+            value={selectedDay}
+            onChange={(e) => setSelectedDay(parseInt(e.target.value))}
+          >
+            {getDayOptions().map((day) => (
+              <option key={day} value={day}>
+                {day}
+              </option>
+            ))}
+          </select>
         </div>
 
-        <div className="calendar-grid">
-          {renderCalendar()}
+        <div className="date-dropdown-group">
+          <label className="date-dropdown-label">Year</label>
+          <select
+            className="date-dropdown"
+            value={selectedYear}
+            onChange={(e) => setSelectedYear(parseInt(e.target.value))}
+          >
+            {getYearOptions().map((year) => (
+              <option key={year} value={year}>
+                {year}
+              </option>
+            ))}
+          </select>
         </div>
+      </div>
 
-        {selectedDate && (
-          <div className="selected-date-display">
-            Selected: {selectedDate.toLocaleDateString('en-US', {
-              weekday: 'long',
-              year: 'numeric',
-              month: 'long',
-              day: 'numeric'
-            })}
-          </div>
+      <div className="selected-date-display">
+        {selectedMonth && selectedDay && selectedYear && (
+          <>
+            Selected: {monthNames[selectedMonth - 1]} {selectedDay}, {selectedYear}
+          </>
         )}
       </div>
 
       <div className="date-picker-buttons">
-        <button
-          className="date-confirm-btn"
-          onClick={handleConfirm}
-          disabled={!selectedDate}
-        >
+        <button className="date-confirm-btn" onClick={handleConfirm}>
           Confirm Date
         </button>
       </div>
