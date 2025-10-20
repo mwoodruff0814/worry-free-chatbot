@@ -82,12 +82,15 @@ const FlowController = () => {
       ];
       addBotMessage(responses[Math.floor(Math.random() * responses.length)], 30);
 
+      // Since we already have locations, skip location collection
       if (value === 'single') {
-        updateStage(STAGES.LOCATION_FROM);
+        // For single item, go to stairs questions
         setTimeout(() => {
-          addBotMessage("Alright, where are we picking up this item from? 💡 Just start typing and I'll suggest addresses!", 25);
+          updateStage(STAGES.STAIRS_FROM);
+          addBotMessage("Perfect! Are there any stairs at your pickup location?", 25);
         }, 25);
       } else {
+        // For moving/labor, show pest disclaimer first
         updateStage(STAGES.PEST_DISCLAIMER);
         setTimeout(() => {
           addBotMessage("Quick pause - I need to show you something important before we continue:", 25);
@@ -128,24 +131,31 @@ const FlowController = () => {
       }, 50);
     }
 
+    // Collect locations FIRST before asking for service type
     setTimeout(() => {
-      const serviceQuestions = [
-        "So, what brings you here today? What kind of service can I help you with?",
-        "What type of service are you looking for today?",
-        "What can I help you with - are you planning a move, or do you need something else?"
+      const locationQuestions = [
+        "Great! Now let me get your addresses. Where are we picking up from?",
+        "Perfect! What's your starting address? I'll suggest addresses as you type!",
+        "Got it! Let's start with your pickup location - where are we loading from?"
       ];
-      addBotMessage(serviceQuestions[Math.floor(Math.random() * serviceQuestions.length)], 50);
-      updateStage(STAGES.SERVICE_SELECTION);
+      addBotMessage(locationQuestions[Math.floor(Math.random() * locationQuestions.length)], 50);
+      setTimeout(() => {
+        addBotMessage("💡 Tip: Start typing and I'll suggest complete addresses!", 25);
+      }, 25);
+      updateStage(STAGES.LOCATION_FROM);
     }, 25);
   }, [updateChatData, addBotMessage, updateStage]);
 
   // Handler for pest disclaimer
   const handlePestDisclaimer = useCallback((value) => {
     if (value === 'continue_after_disclaimer') {
-      updateStage(STAGES.LOCATION_FROM);
-      addBotMessage("Now I'll need your complete starting address to calculate the estimate.", 30);
+      // Locations already collected, go to stairs questions
+      updateStage(STAGES.STAIRS_FROM);
       setTimeout(() => {
-        addBotMessage("💡 Tip: Start typing and I'll suggest addresses!", 50);
+        addBotMessage("Great! Now let me ask you a few questions about each location...", 25);
+        setTimeout(() => {
+          addBotMessage("Starting with your pickup location - are there any stairs there?", 50);
+        }, 25);
       }, 25);
     } else if (value === 'exit_pest_issues') {
       addBotMessage("I understand. Please contact us at 330-435-8686 once any pest issues have been addressed. We'll be happy to help with your move then!", 30);
@@ -258,13 +268,15 @@ const FlowController = () => {
             updateStage(STAGES.OUT_OF_AREA);
           }, 175);
         } else {
-          // Start asking questions about location FROM
+          // Now that we know the locations and distances, ask for service type
           setTimeout(() => {
-            addBotMessage("Now let me ask you a few questions about each location...", 175);
-            setTimeout(() => {
-              updateStage(STAGES.STAIRS_FROM);
-              addBotMessage("Starting with your pickup location - are there any stairs there?", 50);
-            }, 30);
+            const serviceQuestions = [
+              "Perfect! Now that I know where you're moving, what type of service do you need?",
+              "Great! Based on your move distance, what kind of service can I help you with?",
+              "Excellent! Now, what brings you here today - what type of service are you looking for?"
+            ];
+            addBotMessage(serviceQuestions[Math.floor(Math.random() * serviceQuestions.length)], 175);
+            updateStage(STAGES.SERVICE_SELECTION);
           }, 175);
         }
       }, 25);
@@ -283,11 +295,13 @@ const FlowController = () => {
       });
 
       setTimeout(() => {
-        updateStage(STAGES.STAIRS_FROM);
-        addBotMessage("Now let me ask you a few questions about each location...", 25);
-        setTimeout(() => {
-          addBotMessage("Starting with your pickup location - are there any stairs there?", 120);
-        }, 30);
+        const serviceQuestions = [
+          "What type of service do you need for this move?",
+          "What kind of service can I help you with today?",
+          "What brings you here - what type of service are you looking for?"
+        ];
+        addBotMessage(serviceQuestions[Math.floor(Math.random() * serviceQuestions.length)], 50);
+        updateStage(STAGES.SERVICE_SELECTION);
       }, 25);
     }
   }, [chatState.data, updateChatData, addBotMessage, updateStage]);
