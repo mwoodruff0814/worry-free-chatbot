@@ -284,15 +284,21 @@ const EstimateModal = ({ estimate, serviceType, onClose, onEmailEstimate, onBook
         </div> {/* End scrollable content */}
 
         {/* Action Buttons - Sticky at bottom */}
-        <div style={{
-          display: 'flex',
-          gap: '10px',
-          padding: '20px 30px',
-          borderTop: '2px solid #e2e8f0',
-          backgroundColor: 'white',
-          flexShrink: 0,
-          borderRadius: '0 0 20px 20px'
-        }}>
+        <div
+          className="estimate-modal-buttons"
+          style={{
+            display: 'flex',
+            gap: '10px',
+            padding: '20px 30px',
+            borderTop: '2px solid #e2e8f0',
+            backgroundColor: 'white',
+            flexShrink: 0,
+            borderRadius: '0 0 20px 20px',
+            position: 'sticky',
+            bottom: 0,
+            zIndex: 10
+          }}
+        >
           <button
             onClick={onEmailEstimate}
             style={{
