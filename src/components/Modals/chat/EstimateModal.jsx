@@ -163,13 +163,6 @@ const EstimateModal = ({ estimate, serviceType, onClose, onEmailEstimate, onBook
               </div>
             )}
 
-            {estimate.serviceCharge && (
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                <span>Service Fee ({serviceType === 'labor' ? '8%' : '14%'}):</span>
-                <span>${estimate.serviceCharge}</span>
-              </div>
-            )}
-
             {estimate.labor && (
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
                 <span>Labor ({estimate.laborHours} hrs):</span>
@@ -265,6 +258,13 @@ const EstimateModal = ({ estimate, serviceType, onClose, onEmailEstimate, onBook
               </div>
             )}
 
+            {estimate.serviceCharge && (
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                <span>Service Fee ({serviceType === 'labor' ? '8%' : '14%'}):</span>
+                <span>${estimate.serviceCharge}</span>
+              </div>
+            )}
+
             <div style={{
               borderTop: '2px solid #e2e8f0',
               marginTop: '12px',
@@ -306,10 +306,7 @@ const EstimateModal = ({ estimate, serviceType, onClose, onEmailEstimate, onBook
             borderTop: '2px solid #e2e8f0',
             backgroundColor: 'white',
             flexShrink: 0,
-            borderRadius: '0 0 20px 20px',
-            position: 'sticky',
-            bottom: 0,
-            zIndex: 10
+            borderRadius: '0 0 20px 20px'
           }}
         >
           <button
