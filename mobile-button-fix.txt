@@ -1,0 +1,153 @@
+MOBILE BUTTON FIX
+==================
+
+Replace the entire <script> section at the bottom of your HTML (starting around line 792) with this:
+
+<script>
+    // Mobile-friendly chatbot launcher
+    function openChatbot() {
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth <= 768;
+        const chatUrl = 'https://worry-free-chatbot.vercel.app';
+
+        if (isMobile) {
+            // On mobile: open in new tab (full screen)
+            window.open(chatUrl, '_blank');
+        } else {
+            // On desktop: open in popup window
+            const width = 420;
+            const height = 680;
+            const left = (window.screen.width - width) / 2;
+            const top = (window.screen.height - height) / 2;
+            window.open(chatUrl, 'WFMChat', `width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=no,toolbar=no,menubar=no,location=no,status=no`);
+        }
+    }
+
+    // Mobile menu toggle
+    const mobileMenuButton = document.getElementById('mobileMenuButton');
+    const navMenu = document.getElementById('navMenu');
+    const mobileBookingToggle = document.getElementById('mobileBookingToggle');
+    const mobileBookingLinks = document.getElementById('mobileBookingLinks');
+
+    let menuOpen = false;
+    let bookingOpen = false;
+
+    // Mobile menu toggle
+    if (mobileMenuButton && navMenu) {
+        mobileMenuButton.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            menuOpen = !menuOpen;
+            navMenu.classList.toggle('active');
+            mobileMenuButton.classList.toggle('active');
+
+            const hamburger = mobileMenuButton.querySelector('.hamburger-icon');
+            if (menuOpen) {
+                hamburger.style.background = 'transparent';
+            } else {
+                hamburger.style.background = '';
+            }
+        });
+    }
+
+    // Mobile booking toggle
+    if (mobileBookingToggle && mobileBookingLinks) {
+        mobileBookingToggle.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            bookingOpen = !bookingOpen;
+            mobileBookingLinks.classList.toggle('active');
+        });
+
+        // Close when clicking outside
+        document.addEventListener('click', function(e) {
+            if (bookingOpen && !e.target.closest('.mobile-booking-links') && !e.target.closest('#mobileBookingToggle')) {
+                bookingOpen = false;
+                mobileBookingLinks.classList.remove('active');
+            }
+        });
+    }
+
+    // Handle dropdown interactions
+    const dropdowns = document.querySelectorAll('.dropdown');
+
+    dropdowns.forEach(dropdown => {
+        const dropdownTitle = dropdown.querySelector('.dropdown-title');
+        const dropdownContent = dropdown.querySelector('.dropdown-content');
+
+        if (window.innerWidth <= 992 && dropdownTitle && dropdownContent) {
+            dropdownTitle.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+
+                // Close other dropdowns
+                dropdowns.forEach(otherDropdown => {
+                    if (otherDropdown !== dropdown) {
+                        const otherContent = otherDropdown.querySelector('.dropdown-content');
+                        if (otherContent) otherContent.classList.remove('active');
+                    }
+                });
+
+                // Toggle current dropdown
+                dropdownContent.classList.toggle('active');
+            });
+        }
+    });
+
+    // Close menu when clicking outside
+    document.addEventListener('click', function(e) {
+        if (menuOpen && !e.target.closest('.nav-menu') && !e.target.closest('.mobile-menu-button')) {
+            menuOpen = false;
+            navMenu.classList.remove('active');
+            mobileMenuButton.classList.remove('active');
+
+            const hamburger = mobileMenuButton.querySelector('.hamburger-icon');
+            if (hamburger) hamburger.style.background = '';
+
+            dropdowns.forEach(dropdown => {
+                const dropdownContent = dropdown.querySelector('.dropdown-content');
+                if (dropdownContent) dropdownContent.classList.remove('active');
+            });
+        }
+    });
+
+    // Header scroll effect
+    const header = document.querySelector('.main-header');
+    let ticking = false;
+
+    function updateHeader() {
+        const scrollY = window.scrollY;
+
+        if (scrollY > 10) {
+            header.classList.add('scrolled');
+        } else {
+            header.classList.remove('scrolled');
+        }
+
+        ticking = false;
+    }
+
+    window.addEventListener('scroll', function() {
+        if (!ticking) {
+            window.requestAnimationFrame(updateHeader);
+            ticking = true;
+        }
+    });
+</script>
+
+AND replace these TWO buttons:
+
+1. Desktop button (around line 644):
+OLD:
+<button class="quantum-btn quantum-primary"
+        onclick="window.open('https://worry-free-chatbot-bnngsfnrb-matt-5184s-projects.vercel.app', 'WFMChat', 'width=420,height=680,left=' + ((window.screen.width - 420) / 2) + ',top=' + ((window.screen.height - 680) / 2) + ',resizable=yes,scrollbars=no,toolbar=no,menubar=no,location=no,status=no');">
+
+NEW:
+<button class="quantum-btn quantum-primary" onclick="openChatbot()">
+
+2. Mobile button (around line 754):
+OLD:
+<button class="mobile-cta-btn mobile-cta-primary"
+        onclick="window.open('https://worry-free-chatbot-bnngsfnrb-matt-5184s-projects.vercel.app', 'WFMChat', 'width=420,height=680,left=' + ((window.screen.width - 420) / 2) + ',top=' + ((window.screen.height - 680) / 2) + ',resizable=yes,scrollbars=no,toolbar=no,menubar=no,location=no,status=no');">
+
+NEW:
+<button class="mobile-cta-btn mobile-cta-primary" onclick="openChatbot()">
