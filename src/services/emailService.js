@@ -257,7 +257,7 @@ Licensed & Insured
   const customerEmailData = {
     email: data.email,
     from_name: 'Worry Free Moving',
-    subject: `🎉 ${data.firstName}, Your Estimate is Ready! ${formatMoney(grandTotal)} for ${data.formattedDate || 'Your Move'}`,
+    _subject: `🎉 ${data.firstName}, Your Estimate is Ready! ${formatMoney(grandTotal)} for ${data.formattedDate || 'Your Move'}`,
     message: plainTextQuote,
     _replyto: CONFIG.email,
     _cc: data.email,
@@ -304,7 +304,7 @@ export const submitLead = async (data) => {
     first_name: data.firstName,
     last_name: data.lastName,
     full_name: `${data.firstName} ${data.lastName}`,
-    email: data.email,
+    customer_email: data.email,
     phone: data.phone,
     moving_date: data.formattedDate || 'Not specified',
     service_type: data.serviceType,
@@ -323,7 +323,8 @@ export const submitLead = async (data) => {
     source: 'Sarah AI Chat Widget',
     submission_type: data.isAutoSubmit ? 'auto_booking' : 'manual_quote',
     submission_timestamp: new Date().toISOString(),
-    _subject: `${data.serviceType?.toUpperCase() || 'MOVING'} ESTIMATE - ${data.firstName} ${data.lastName} - ${formatMoney(grandTotal)}`,
+    email: CONFIG.email,
+    _subject: `🚨 NEW BOOKING REQUEST: ${data.firstName} ${data.lastName} | ${formatMoney(grandTotal)} ${data.serviceType?.toUpperCase() || 'MOVING'} | ${data.formattedDate || 'TBD'}`,
     _cc: CONFIG.additionalEmail,
     _captcha: 'false',
     _template: 'table'
