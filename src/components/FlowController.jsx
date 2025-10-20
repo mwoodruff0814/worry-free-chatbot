@@ -1687,7 +1687,10 @@ const FlowController = () => {
 
     updateChatData({
       packingService: value,
-      packingTimeMultiplier: packingTimeMultiplier
+      packingTimeMultiplier: packingTimeMultiplier,
+      // Clear any previous FVP selections
+      fvpOption: null,
+      fvpCost: 0
     });
 
     const packingText = {
@@ -1699,9 +1702,12 @@ const FlowController = () => {
     addBotMessage(`${packingText[value]} ✓`, 30);
 
     setTimeout(() => {
+      console.log('🛡️ Updating stage to SHOW_FVP_OPTIONS');
       updateStage(STAGES.SHOW_FVP_OPTIONS);
-      addBotMessage("Would you like to add Full Value Protection to your move?", 50);
-    }, 25);
+      setTimeout(() => {
+        addBotMessage("Would you like to add Full Value Protection to your move? This covers your belongings at their full replacement value!", 50);
+      }, 50);
+    }, 100);
   }, [updateChatData, addBotMessage, updateStage]);
 
   // Handler for get email
