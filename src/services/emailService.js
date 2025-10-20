@@ -257,7 +257,7 @@ Licensed & Insured
   const customerEmailData = {
     email: data.email,
     from_name: 'Worry Free Moving',
-    subject: `Your Moving Quote - ${formatMoney(grandTotal)} - ${data.formattedDate || 'TBD'}`,
+    subject: `🎉 ${data.firstName}, Your Estimate is Ready! ${formatMoney(grandTotal)} for ${data.formattedDate || 'Your Move'}`,
     message: plainTextQuote,
     _replyto: CONFIG.email,
     _cc: data.email,
