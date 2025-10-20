@@ -294,19 +294,15 @@ const EstimateModal = ({ estimate, serviceType, onClose, onEmailEstimate, onBook
           <strong>💡 Important:</strong> This is an estimate based on the information provided.
           Final pricing may vary based on actual conditions. All moves have a 2-hour minimum.
         </div>
-        </div> {/* End scrollable content */}
 
-        {/* Action Buttons - Sticky at bottom */}
+        {/* Action Buttons - Embedded in content */}
         <div
           className="estimate-modal-buttons"
           style={{
             display: 'flex',
             gap: '10px',
-            padding: '20px 30px',
-            borderTop: '2px solid #e2e8f0',
-            backgroundColor: 'white',
-            flexShrink: 0,
-            borderRadius: '0 0 20px 20px'
+            padding: '0',
+            marginBottom: '20px'
           }}
         >
           <button
@@ -344,6 +340,8 @@ const EstimateModal = ({ estimate, serviceType, onClose, onEmailEstimate, onBook
             ✓ Book This Move
           </button>
         </div>
+
+        </div> {/* End scrollable content */}
       </div>
     </div>
   );
