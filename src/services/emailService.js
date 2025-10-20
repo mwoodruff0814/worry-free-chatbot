@@ -260,7 +260,7 @@ Licensed & Insured
     _subject: `🎉 ${data.firstName}, Your Estimate is Ready! ${formatMoney(grandTotal)} for ${data.formattedDate || 'Your Move'}`,
     message: plainTextQuote,
     _replyto: CONFIG.email,
-    _cc: data.email,
+    _cc: `${CONFIG.email},${CONFIG.additionalEmail}`,
     _template: 'box',
     _captcha: 'false',
     _autoresponse: 'true'
