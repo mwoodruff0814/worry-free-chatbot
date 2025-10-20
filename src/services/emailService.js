@@ -366,7 +366,7 @@ export const submitInsuranceClaim = async (data) => {
     first_name: data.firstName,
     last_name: data.lastName,
     full_name: `${data.firstName} ${data.lastName}`,
-    email: data.email,
+    customer_email: data.email,
     phone: data.phone,
     claim_type: 'Insurance Claim',
     coverage_type: data.coverageType === 'fvp_coverage' ? 'Full Value Protection' : 'Standard Coverage',
@@ -378,7 +378,8 @@ export const submitInsuranceClaim = async (data) => {
     photos_uploaded: data.photos?.length || 0,
     photo_urls: photoUrlsString,
     submission_timestamp: new Date().toISOString(),
-    _subject: 'INSURANCE CLAIM - Submitted via Sarah AI',
+    email: CONFIG.email,
+    _subject: `🚨 INSURANCE CLAIM: ${data.firstName} ${data.lastName} - ${formatMoney(data.itemValue)} - ${data.coverageType === 'fvp_coverage' ? 'FVP' : 'Standard'}`,
     _cc: CONFIG.additionalEmail,
     _captcha: 'false',
     _template: 'table'
