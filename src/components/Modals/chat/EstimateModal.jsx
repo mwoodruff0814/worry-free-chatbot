@@ -34,12 +34,12 @@ const EstimateModal = ({ estimate, serviceType, onClose, onEmailEstimate, onBook
       <div style={{
         background: 'white',
         borderRadius: '20px',
-        padding: '30px',
         maxWidth: '600px',
         width: '100%',
-        maxHeight: '85vh',
-        overflowY: 'auto',
-        boxShadow: '0 20px 60px rgba(0,0,0,0.5)'
+        maxHeight: '90vh',
+        boxShadow: '0 20px 60px rgba(0,0,0,0.5)',
+        display: 'flex',
+        flexDirection: 'column'
       }}
       onClick={(e) => e.stopPropagation()}
       >
@@ -48,9 +48,11 @@ const EstimateModal = ({ estimate, serviceType, onClose, onEmailEstimate, onBook
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
-          marginBottom: '25px',
+          marginBottom: '15px',
           borderBottom: '2px solid #e2e8f0',
-          paddingBottom: '15px'
+          paddingBottom: '15px',
+          padding: '20px 30px 15px 30px',
+          flexShrink: 0
         }}>
           <h2 style={{ margin: 0, fontSize: '24px', color: '#004085' }}>
             {getServiceTitle()}
@@ -73,6 +75,12 @@ const EstimateModal = ({ estimate, serviceType, onClose, onEmailEstimate, onBook
           </button>
         </div>
 
+        {/* Scrollable Content */}
+        <div style={{
+          overflowY: 'auto',
+          flex: 1,
+          padding: '0 30px'
+        }}>
         {/* Estimate Details */}
         <div style={{
           background: 'linear-gradient(135deg, #e6f1ff 0%, #f0f7ff 100%)',
@@ -268,9 +276,18 @@ const EstimateModal = ({ estimate, serviceType, onClose, onEmailEstimate, onBook
           <strong>💡 Important:</strong> This is an estimate based on the information provided.
           Final pricing may vary based on actual conditions. All moves have a 2-hour minimum.
         </div>
+        </div> {/* End scrollable content */}
 
-        {/* Action Buttons */}
-        <div style={{ display: 'flex', gap: '10px' }}>
+        {/* Action Buttons - Sticky at bottom */}
+        <div style={{
+          display: 'flex',
+          gap: '10px',
+          padding: '20px 30px',
+          borderTop: '2px solid #e2e8f0',
+          backgroundColor: 'white',
+          flexShrink: 0,
+          borderRadius: '0 0 20px 20px'
+        }}>
           <button
             onClick={onEmailEstimate}
             style={{
