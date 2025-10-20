@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Google Maps API Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        .status { padding: 10px; margin: 10px 0; border-radius: 5px; }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        .info { background: #d1ecf1; color: #0c5460; }
+        input { padding: 10px; width: 100%; font-size: 16px; margin: 10px 0; }
+        button { padding: 10px 20px; font-size: 16px; cursor: pointer; }
+        #results { margin-top: 20px; }
+        .suggestion { padding: 10px; border-bottom: 1px solid #ddd; cursor: pointer; }
+        .suggestion:hover { background: #f0f0f0; }
+    </style>
+</head>
+<body>
+    <h1>🗺️ Google Maps API Test</h1>
+    <div id="status">Loading...</div>
+
+    <h2>Test Autocomplete</h2>
+    <input id="addressInput" type="text" placeholder="Type an address (e.g., 123 Main St)..." />
+    <div id="results"></div>
+
+    <h2>Test Distance Calculation</h2>
+    <button onclick="testDistance()">Calculate Distance (Base to Youngstown)</button>
+    <div id="distanceResult"></div>
+
+    <script>
+        const API_KEY = 'AIzaSyAWGIVnh7-2sgDJin_2qgNvwh4JD9UgJDo';
+        let autocompleteService;
+        let directionsService;
+        let sessionToken;
+
+        function showStatus(message, type) {
+            const status = document.getElementById('status');
+            status.className = 'status ' + type;
+            status.innerHTML = message;
+            console.log(message);
+        }
+
+        function loadGoogleMaps() {
+            return new Promise((resolve, reject) => {
+                if (window.google && window.google.maps) {
+                    resolve();
+                    return;
+                }
+
+                const script = document.createElement('script');
+                script.src = `https://maps.googleapis.com/maps/api/js?key=${API_KEY}&libraries=places&callback=initMaps`;
+                script.async = true;
+                script.defer = true;
+                script.onerror = () => reject(new Error('Failed to load Google Maps'));
+
+                window.initMaps = () => {
+                    delete window.initMaps;
+                    resolve();
+                };
+
+                document.head.appendChild(script);
+            });
+        }
+
+        async function init() {
+            try {
+                showStatus('🔄 Loading Google Maps API...', 'info');
+                await loadGoogleMaps();
+
+                showStatus('✅ Google Maps loaded successfully!', 'success');
+
+                autocompleteService = new google.maps.places.AutocompleteService();
+                directionsService = new google.maps.DirectionsService();
+                sessionToken = new google.maps.places.AutocompleteSessionToken();
+
+                console.log('Services initialized:', {
+                    autocomplete: !!autocompleteService,
+                    directions: !!directionsService,
+                    session: !!sessionToken
+                });
+
+                // Set up autocomplete listener
+                const input = document.getElementById('addressInput');
+                input.addEventListener('input', handleInput);
+
+            } catch (error) {
+                showStatus('❌ Error: ' + error.message, 'error');
+                console.error('Full error:', error);
+            }
+        }
+
+        let debounceTimer;
+        function handleInput(e) {
+            clearTimeout(debounceTimer);
+            const value = e.target.value;
+
+            if (value.length < 3) {
+                document.getElementById('results').innerHTML = '';
+                return;
+            }
+
+            debounceTimer = setTimeout(() => {
+                console.log('Fetching predictions for:', value);
+                getPlacePredictions(value);
+            }, 300);
+        }
+
+        function getPlacePredictions(input) {
+            const request = {
+                input: input,
+                sessionToken: sessionToken,
+                componentRestrictions: { country: 'us' }
+            };
+
+            autocompleteService.getPlacePredictions(request, (predictions, status) => {
+                console.log('Autocomplete status:', status);
+                console.log('Predictions:', predictions);
+
+                const results = document.getElementById('results');
+
+                if (status === google.maps.places.PlacesServiceStatus.OK && predictions) {
+                    results.innerHTML = predictions.map(p =>
+                        `<div class="suggestion">📍 ${p.description}</div>`
+                    ).join('');
+                    showStatus(`✅ Found ${predictions.length} suggestions!`, 'success');
+                } else if (status === google.maps.places.PlacesServiceStatus.ZERO_RESULTS) {
+                    results.innerHTML = '<div class="info">No results found</div>';
+                } else {
+                    results.innerHTML = `<div class="error">Error: ${status}</div>`;
+                    showStatus(`❌ Autocomplete error: ${status}`, 'error');
+                }
+            });
+        }
+
+        function testDistance() {
+            const resultDiv = document.getElementById('distanceResult');
+            resultDiv.innerHTML = '<div class="info">Calculating...</div>';
+
+            const request = {
+                origin: '11715 Mahoning Avenue, North Jackson, OH 44451',
+                destination: 'Youngstown, OH',
+                travelMode: google.maps.TravelMode.DRIVING
+            };
+
+            directionsService.route(request, (response, status) => {
+                console.log('Distance status:', status);
+                console.log('Response:', response);
+
+                if (status === 'OK') {
+                    const leg = response.routes[0].legs[0];
+                    const miles = (leg.distance.value / 1609.34).toFixed(1);
+                    const minutes = Math.ceil(leg.duration.value / 60);
+
+                    resultDiv.innerHTML = `
+                        <div class="success">
+                            ✅ Distance: ${miles} miles<br>
+                            ⏱️ Duration: ${minutes} minutes
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `<div class="error">❌ Error: ${status}</div>`;
+                }
+            });
+        }
+
+        // Start the test
+        init();
+    </script>
+</body>
+</html>

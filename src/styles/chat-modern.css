@@ -1,0 +1,25 @@
+/* MODERNIZED chat.css - Larger, better design */
+.chat-widget { width: 450px; height: 680px; border-radius: 20px; box-shadow: 0 10px 50px rgba(0,0,0,0.15); animation: slideIn 0.4s ease-out; }
+@keyframes slideIn { from { opacity: 0; transform: translateY(20px) scale(0.95); } to { opacity: 1; transform: translateY(0) scale(1); } }
+.chat-header { padding: 18px 20px; box-shadow: 0 4px 12px rgba(0,64,133,0.2); }
+.chat-header img { width: 36px; height: 36px; }
+.chat-header span { font-size: 16px; }
+.chat-close-btn { width: 32px; height: 32px; }
+.chat-messages { padding: 24px; scroll-behavior: smooth; }
+.chat-messages::-webkit-scrollbar { width: 8px; }
+.chat-messages::-webkit-scrollbar-track { background: #f0f4f8; }
+.chat-messages::-webkit-scrollbar-thumb { background: #cbd5e0; border-radius: 4px; }
+.chat-message { margin-bottom: 16px; padding: 14px 18px; border-radius: 20px; max-width: 85%; font-size: 15px; line-height: 1.5; }
+.bot-message { color: #2d3748; border-radius: 20px 20px 20px 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+.user-message { border-radius: 20px 20px 4px 20px; box-shadow: 0 2px 8px rgba(0,64,133,0.3); }
+.typing-indicator { padding: 14px 18px; margin-bottom: 16px; border-radius: 20px 20px 20px 4px; }
+.typing-indicator span { width: 9px; height: 9px; margin: 0 3px; }
+.chat-options { padding: 12px; max-height: 280px; }
+.chat-option { padding: 14px 18px; margin: 6px 0; border-radius: 28px; font-size: 15px; }
+.chat-option:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,64,133,0.3); }
+.chat-option.primary:hover { transform: translateY(-3px); box-shadow: 0 6px 20px rgba(0,64,133,0.4); }
+.chat-input-area { padding: 16px; gap: 12px; }
+.chat-input { padding: 14px 18px; border-radius: 28px; font-size: 15px; }
+.chat-input:focus { box-shadow: 0 0 0 4px rgba(0,64,133,0.1); }
+.chat-send-btn { padding: 14px 24px; border-radius: 28px; font-size: 15px; box-shadow: 0 4px 12px rgba(0,64,133,0.3); }
+.chat-send-btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(0,64,133,0.4); }

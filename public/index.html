@@ -1,0 +1,49 @@
+<!-- FILE: public/index.html -->
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#004085" />
+    <meta name="description" content="Get an instant moving estimate with Sarah, your AI moving assistant" />
+    <title>Worry Free Moving - Get Instant Estimate</title>
+    
+    <style>
+      /* Reset */
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+          'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+          sans-serif;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+
+      /* Placeholder for any additional page styles */
+    </style>
+    <!-- Load Google Maps API directly in HTML -->
+    <script>
+      window.googleMapsLoaded = false;
+      window.initGoogleMaps = function() {
+        console.log('✅ Google Maps loaded from HTML script tag');
+        window.googleMapsLoaded = true;
+      };
+    </script>
+    <script async defer
+      src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAWGIVnh7-2sgDJin_2qgNvwh4JD9UgJDo&libraries=places&callback=initGoogleMaps">
+    </script>
+  </head>
+  <body>
+    <noscript>You need to enable JavaScript to run this app.</noscript>
+    
+    <!-- React root -->
+    <div id="root"></div>
+
+    <!-- Chat button is now handled by React (ChatButton component) -->
+  </body>
+</html>

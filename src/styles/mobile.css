@@ -1,0 +1,98 @@
+/* FILE: src/styles/mobile.css
+   PURPOSE: Mobile-specific responsive styles */
+
+@media (max-width: 768px) {
+  .chat-container {
+    bottom: 0;
+    right: 0;
+    left: 0;
+    padding: 0;
+  }
+  
+  .chat-widget {
+    width: 100%;
+    height: 100vh;
+    height: 100dvh;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    border-radius: 0;
+    max-width: none;
+    max-height: none;
+  }
+  
+  .chat-messages {
+    padding: 15px;
+  }
+  
+  .chat-message {
+    max-width: 85%;
+    font-size: 15px;
+  }
+  
+  .chat-options {
+    max-height: 40vh;
+  }
+  
+  .chat-option {
+    padding: 14px 20px;
+    font-size: 16px;
+    margin: 8px 0;
+    min-height: 48px;
+  }
+  
+  .chat-input {
+    font-size: 16px !important;
+    padding: 14px 18px;
+  }
+  
+  .chat-send-btn {
+    padding: 14px 24px;
+    font-size: 16px;
+  }
+  
+  .autocomplete-dropdown {
+    max-height: 40vh;
+    border-radius: 15px;
+  }
+  
+  .autocomplete-item {
+    padding: 18px;
+    font-size: 16px;
+    min-height: 50px;
+  }
+  
+  .photo-upload-container {
+    min-height: 150px;
+  }
+
+  .photo-upload-button {
+    min-height: 48px;
+    font-size: 16px;
+  }
+
+  .photo-preview-container {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  /* Chat button mobile positioning */
+  .wfm-chat-button {
+    bottom: 20px;
+    right: 20px;
+    width: 160px;
+    height: 56px;
+  }
+
+  .chat-button-text {
+    font-size: 14px;
+  }
+}
+
+/* iOS-specific fixes */
+@supports (-webkit-touch-callout: none) {
+  .chat-widget {
+    height: -webkit-fill-available;
+  }
+}

@@ -1,0 +1,680 @@
+// FILE: src/components/FlowController.jsx
+import React, { useEffect, useCallback } from 'react';
+import { useChatContext } from '../context/ChatContext';
+import { STAGES } from '../constants/stages';
+import { calculateDistance } from '../utils/googleMaps';
+import { CONFIG } from '../constants/config';
+import ChatInput from './Modals/chat/ChatInput';
+import ChatOptions from './Modals/chat/ChatOptions';
+
+const FlowController = () => {
+  const { 
+    chatState, 
+    updateStage,
+    updateChatData,
+    addBotMessage,
+    addUserMessage,
+    saveNavigationState
+  } = useChatContext();
+
+  // Handler for name input
+  const handleNameInput = useCallback((value) => {
+    const parts = value.trim().split(/\s+/);
+    if (parts.length >= 2) {
+      const firstName = parts[0];
+      const lastName = parts.slice(1).join(' ');
+      
+      updateChatData({
+        name: value,
+        firstName: firstName,
+        lastName: lastName
+      });
+      
+      addUserMessage(value);
+      addBotMessage(`Great! Nice to meet you, ${firstName}! 😊`, 500);
+      
+      setTimeout(() => {
+        addBotMessage("What type of service do you need today?", 800);
+        updateStage(STAGES.SERVICE_SELECTION);
+      }, 1500);
+    } else {
+      addUserMessage(value);
+      addBotMessage("I need both your first and last name to proceed. Please enter your full name:", 500);
+    }
+  }, [updateChatData, addUserMessage, addBotMessage, updateStage]);
+
+  // Handler for service selection
+  const handleServiceSelection = useCallback((value) => {
+    updateChatData({ serviceType: value });
+    
+    const serviceNames = {
+      'moving': 'full moving service',
+      'labor': 'labor crew',
+      'single': 'single item move',
+      'insurance_claim': 'insurance claim'
+    };
+    
+    if (value === 'questions') {
+      updateStage(STAGES.QUESTIONS);
+      addBotMessage("I'm happy to help! What would you like to know?", 500);
+    } else if (value === 'insurance_claim') {
+      updateStage(STAGES.INSURANCE_CLAIMS_START);
+      addBotMessage("I'm sorry to hear about the damage. I'm here to help you file your claim quickly and easily.", 500);
+    } else {
+      addBotMessage(`Perfect! I'll help you get a ${serviceNames[value]} estimate.`, 500);
+      setTimeout(() => {
+        addBotMessage("Let's start with your moving date. When would you like to schedule your service? 📅", 800);
+        updateStage(STAGES.MOVING_DATE);
+      }, 1200);
+    }
+  }, [updateChatData, addBotMessage, updateStage]);
+
+  // Handler for moving date
+  const handleMovingDate = useCallback((value) => {
+    const formattedDate = new Date(value).toLocaleDateString('en-US', { 
+      weekday: 'long', 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric' 
+    });
+    
+    updateChatData({ 
+      movingDate: value,
+      formattedDate: formattedDate
+    });
+    
+    addUserMessage(formattedDate);
+    addBotMessage(`Perfect! I have ${formattedDate} noted for your service.`, 500);
+    
+    // Check if date is soon for urgency messaging
+    const today = new Date();
+    const moveDate = new Date(value);
+    const daysDiff = Math.ceil((moveDate - today) / (1000 * 60 * 60 * 24));
+    
+    if (daysDiff <= 7 && daysDiff >= 0) {
+      setTimeout(() => {
+        addBotMessage(`⚡ That's coming up soon - ${daysDiff} days away! Our schedule is filling up fast for this week.`, 800);
+        addBotMessage("🚀 Sarah's tip: For last-minute moves, I recommend calling right after this estimate to secure your spot!", 1200);
+      }, 800);
+    }
+    
+    if (chatState.data.serviceType === 'single') {
+      updateStage(STAGES.LOCATION_FROM);
+      setTimeout(() => {
+        addBotMessage("Now I need the pickup address for your item.", 1500);
+        addBotMessage("💡 Tip: Start typing and I'll suggest addresses!", 2000);
+      }, 1000);
+    } else {
+      updateStage(STAGES.PEST_DISCLAIMER);
+      setTimeout(() => {
+        addBotMessage("Before we continue, I need to show you an important notice:", 1500);
+      }, 1000);
+    }
+  }, [updateChatData, addUserMessage, addBotMessage, updateStage, chatState.data.serviceType]);
+
+  // Handler for pest disclaimer
+  const handlePestDisclaimer = useCallback((value) => {
+    if (value === 'continue_after_disclaimer') {
+      if (!chatState.data.pestDisclaimerAgreed) {
+        addBotMessage("You must agree to the pest control disclaimer to continue.", 500);
+        return;
+      }
+      
+      updateStage(STAGES.LOCATION_FROM);
+      addBotMessage("Now I'll need your complete starting address to calculate the estimate.", 500);
+      setTimeout(() => {
+        addBotMessage("💡 Tip: Start typing and I'll suggest addresses!", 800);
+      }, 1000);
+    } else if (value === 'exit_pest_issues') {
+      addBotMessage("I understand. Please contact us at 330-435-8686 once any pest issues have been addressed. We'll be happy to help with your move then!", 500);
+      updateStage(STAGES.EXIT);
+    }
+  }, [chatState.data.pestDisclaimerAgreed, addBotMessage, updateStage]);
+
+  // Handler for location from - WITH GOOGLE MAPS DISTANCE CALCULATION
+  const handleLocationFrom = useCallback(async (value) => {
+    // Validate address format
+    if (!value.includes(',') || value.split(',').length < 2) {
+      addUserMessage(value);
+      addBotMessage("Could you please enter a complete address including street, city, and state?", 500);
+      addBotMessage("Example: 123 Main Street, Youngstown, OH 44512", 800);
+      return;
+    }
+    
+    updateChatData({ from: value });
+    addUserMessage(value);
+    addBotMessage("Great! Calculating distance from our base... 🗺️", 500);
+    
+    // Calculate distance from base address
+    try {
+      const baseAddress = CONFIG.baseAddress || "11715 Mahoning Avenue, North Jackson, OH 44451";
+      const result = await calculateDistance(baseAddress, value);
+      
+      // Store the calculated values
+      updateChatData({ 
+        fromDistance: parseFloat(result.distance),
+        fromDuration: parseFloat(result.duration),
+        fromHasTolls: result.hasTolls || false
+      });
+      
+      // Show the calculated distance
+      setTimeout(() => {
+        addBotMessage(`Distance from our base: ${result.distance} miles (${Math.ceil(result.duration * 60)} minutes drive) ✅`, 800);
+        
+        // Check if it's too far
+        if (parseFloat(result.distance) > 150) {
+          addBotMessage("🚨 This location might be outside our standard service area. You may need to call for a custom quote.", 1200);
+          updateStage(STAGES.OUT_OF_AREA);
+          
+          // Show options for out of area
+          setTimeout(() => {
+            addBotMessage("Would you like to:", 1500);
+            // This will trigger ChatOptions to show appropriate choices
+          }, 1200);
+        } else {
+          // Check if it's a long distance that might need special handling
+          if (parseFloat(result.distance) > 85) {
+            addBotMessage("📍 Note: This is a longer distance move - additional travel fees will apply.", 1200);
+          }
+          
+          setTimeout(() => {
+            updateStage(STAGES.STAIRS_FROM);
+            addBotMessage("Are there any stairs at your current location?", 500);
+          }, 1500);
+        }
+      }, 1000);
+      
+    } catch (error) {
+      console.error('Distance calculation error:', error);
+      addBotMessage(`⚠️ ${error.message || "Couldn't calculate distance automatically. We'll verify during booking."}`, 800);
+      
+      // Continue anyway but set a default distance
+      updateChatData({ 
+        fromDistance: 30, // Default distance
+        fromDuration: 0.67 // Default ~40 min
+      });
+      
+      setTimeout(() => {
+        updateStage(STAGES.STAIRS_FROM);
+        addBotMessage("Are there any stairs at your current location?", 500);
+      }, 1500);
+    }
+  }, [updateChatData, addUserMessage, addBotMessage, updateStage]);
+
+  // Handler for stairs from
+  const handleStairsFrom = useCallback((value) => {
+    updateChatData({ stairsFrom: parseInt(value) });
+    
+    const stairsText = value === '0' ? 'No stairs' : value === '1' ? '1 flight' : `${value} flights`;
+    addUserMessage(stairsText);
+    
+    if (chatState.data.serviceType === 'single') {
+      updateStage(STAGES.LOCATION_TO);
+      addBotMessage("Great! Now I need the delivery address.", 500);
+      addBotMessage("💡 Tip: Start typing and I'll suggest addresses!", 800);
+    } else if (chatState.data.serviceType === 'labor') {
+      updateStage(STAGES.CREW_SIZE);
+      addBotMessage("How many movers do you need?", 500);
+    } else {
+      updateStage(STAGES.LOCATION_TO);
+      addBotMessage("Great! Now I need your destination address.", 500);
+      addBotMessage("Where are you moving TO?", 800);
+      addBotMessage("💡 Tip: Start typing and I'll suggest addresses!", 1200);
+    }
+  }, [updateChatData, addUserMessage, addBotMessage, updateStage, chatState.data.serviceType]);
+
+  // Handler for location to - WITH TRIP DISTANCE CALCULATION
+  const handleLocationTo = useCallback(async (value) => {
+    // Validate address format
+    if (!value.includes(',') || value.split(',').length < 2) {
+      addUserMessage(value);
+      addBotMessage("Please enter a complete address including street, city, and state.", 500);
+      return;
+    }
+    
+    updateChatData({ to: value });
+    addUserMessage(value);
+    addBotMessage("Calculating trip distance and time... 🗺️", 500);
+    
+    // Calculate trip distance from pickup to delivery
+    try {
+      if (chatState.data.from) {
+        const result = await calculateDistance(chatState.data.from, value);
+        
+        updateChatData({ 
+          tripDistance: parseFloat(result.distance),
+          tripDuration: parseFloat(result.duration),
+          tripHasTolls: result.hasTolls || false
+        });
+        
+        // Calculate toll costs if applicable
+        let tollCost = 0;
+        if (result.hasTolls || chatState.data.fromHasTolls) {
+          tollCost = Math.max(10, parseFloat(result.distance) * 0.08); // $0.08 per mile estimate
+          updateChatData({ tollCost: tollCost });
+        }
+        
+        setTimeout(() => {
+          addBotMessage(`Trip distance: ${result.distance} miles (${Math.ceil(result.duration * 60)} minutes drive) ✅`, 800);
+          
+          // Show toll notice if applicable
+          if (tollCost > 0) {
+            addBotMessage(`📍 Note: This route includes toll roads. Estimated toll cost: $${tollCost.toFixed(2)}`, 1200);
+          }
+          
+          // Check for long distance
+          const totalDistance = (chatState.data.fromDistance || 0) + parseFloat(result.distance);
+          if (totalDistance > 100) {
+            addBotMessage("📍 Note: Long distance move - this affects your estimate calculation.", 1400);
+          }
+          
+          // For single item moves, also calculate return distance if needed
+          if (chatState.data.serviceType === 'single') {
+            // Calculate if we need to charge for return trip
+            calculateReturnDistance(value);
+          }
+          
+          setTimeout(() => {
+            updateStage(STAGES.STAIRS_TO);
+            addBotMessage("Are there any stairs at your destination?", 500);
+          }, 1500);
+        }, 1000);
+      }
+    } catch (error) {
+      console.error('Trip distance calculation error:', error);
+      addBotMessage(`⚠️ ${error.message || "Couldn't calculate distance automatically. We'll verify during booking."}`, 800);
+      
+      // Set default trip distance
+      updateChatData({ 
+        tripDistance: 30,
+        tripDuration: 0.67
+      });
+      
+      setTimeout(() => {
+        updateStage(STAGES.STAIRS_TO);
+        addBotMessage("Are there any stairs at your destination?", 500);
+      }, 1500);
+    }
+  }, [updateChatData, addUserMessage, addBotMessage, updateStage, chatState.data.from, chatState.data.fromDistance, chatState.data.serviceType]);
+
+  // Helper function to calculate return distance from delivery to base
+  const calculateReturnDistance = useCallback(async (deliveryAddress) => {
+    try {
+      const baseAddress = CONFIG.baseAddress || "11715 Mahoning Avenue, North Jackson, OH 44451";
+      const result = await calculateDistance(deliveryAddress, baseAddress);
+      
+      const returnDistance = parseFloat(result.distance);
+      const returnDuration = parseFloat(result.duration);
+      
+      updateChatData({ 
+        deliveryToBaseDistance: returnDistance,
+        deliveryToBaseDuration: returnDuration
+      });
+      
+      // Only charge half return if > 85 miles
+      if (returnDistance > 85) {
+        console.log('Long return distance detected:', returnDistance, 'miles - will charge half return trip');
+      }
+    } catch (error) {
+      console.error('Error calculating return distance:', error);
+      // Fallback to using fromDistance as estimate
+      updateChatData({ 
+        deliveryToBaseDistance: chatState.data.fromDistance || 30,
+        deliveryToBaseDuration: ((chatState.data.fromDistance || 30) / 45)
+      });
+    }
+  }, [updateChatData, chatState.data.fromDistance]);
+
+  // Handler for stairs to
+  const handleStairsTo = useCallback((value) => {
+    updateChatData({ 
+      stairsTo: parseInt(value),
+      deliveryStairs: parseInt(value) // Also set for single items
+    });
+    
+    const stairsText = value === '0' ? 'No stairs' : value === '1' ? '1 flight' : `${value} flights`;
+    addUserMessage(stairsText);
+    
+    if (chatState.data.serviceType === 'single') {
+      updateStage(STAGES.OFFER_PHOTOS_SINGLE);
+      addBotMessage(`Would you like to add photos of your ${chatState.data.itemName || 'item'}? This ensures we bring the right equipment.`, 500);
+    } else {
+      updateStage(STAGES.ASK_THIRD_LOCATION);
+      addBotMessage("Do you have a third location (like a storage unit)?", 500);
+    }
+  }, [updateChatData, addUserMessage, addBotMessage, updateStage, chatState.data.serviceType, chatState.data.itemName]);
+
+  // Handler for third location
+  const handleThirdLocation = useCallback(async (answer) => {
+    if (answer === 'yes') {
+      updateChatData({ hasThirdLocation: true });
+      updateStage(STAGES.LOCATION_THIRD);
+      addBotMessage("What's the address of the third location?", 500);
+      addBotMessage("💡 Tip: Start typing and I'll suggest addresses!", 800);
+    } else {
+      updateChatData({ hasThirdLocation: false });
+      proceedAfterLocations();
+    }
+  }, [updateChatData, updateStage, addBotMessage]);
+
+  // Handler for third location address
+  const handleLocationThird = useCallback(async (value) => {
+    if (!value.includes(',') || value.split(',').length < 2) {
+      addUserMessage(value);
+      addBotMessage("Please enter a complete address including street, city, and state.", 500);
+      return;
+    }
+    
+    updateChatData({ thirdLocation: value });
+    addUserMessage(value);
+    addBotMessage("Calculating additional distance and time... 🗺️", 500);
+    
+    try {
+      // Calculate from destination to third location
+      const toThird = await calculateDistance(chatState.data.to, value);
+      // Calculate from third location back to base
+      const baseAddress = CONFIG.baseAddress || "11715 Mahoning Avenue, North Jackson, OH 44451";
+      const thirdToBase = await calculateDistance(value, baseAddress);
+      
+      updateChatData({
+        thirdLocationDistance: parseFloat(toThird.distance),
+        thirdLocationDuration: parseFloat(toThird.duration),
+        thirdToBaseDistance: parseFloat(thirdToBase.distance),
+        thirdToBaseDuration: parseFloat(thirdToBase.duration)
+      });
+      
+      // Calculate total trip distance
+      const totalTripDistance = (chatState.data.tripDistance || 0) + 
+                              parseFloat(toThird.distance) + 
+                              parseFloat(thirdToBase.distance);
+      
+      updateChatData({ totalTripDistance: totalTripDistance });
+      
+      setTimeout(() => {
+        addBotMessage(`Additional distance for third location: ${toThird.distance} miles (${Math.ceil(toThird.duration * 60)} minutes) ✅`, 800);
+        addBotMessage(`Total trip with all stops: ${totalTripDistance.toFixed(1)} miles`, 1200);
+        
+        setTimeout(() => {
+          updateStage(STAGES.STAIRS_THIRD);
+          addBotMessage("Are there any stairs at the third location?", 500);
+        }, 800);
+      }, 1000);
+    } catch (error) {
+      console.error('Third location distance error:', error);
+      addBotMessage(`⚠️ Couldn't calculate distance for third location. We'll verify during booking.`, 800);
+      
+      setTimeout(() => {
+        updateStage(STAGES.STAIRS_THIRD);
+        addBotMessage("Are there any stairs at the third location?", 500);
+      }, 1500);
+    }
+  }, [updateChatData, addUserMessage, addBotMessage, updateStage, chatState.data.to, chatState.data.tripDistance]);
+
+  // Proceed after all locations are collected
+  const proceedAfterLocations = useCallback(() => {
+    updateStage(STAGES.HOME_TYPE);
+    addBotMessage("What type of place are you moving FROM?", 500);
+  }, [updateStage, addBotMessage]);
+
+  // Process user responses
+  const processResponse = useCallback((value) => {
+    console.log('FlowController: Processing response:', value, 'for stage:', chatState.stage);
+    
+    if (!['restart', 'continue', 'back_to_questions'].includes(value)) {
+      saveNavigationState();
+    }
+
+    if (value === 'restart') {
+      window.location.reload();
+      return;
+    }
+
+    switch (chatState.stage) {
+      case STAGES.GET_NAME_INITIAL:
+        handleNameInput(value);
+        break;
+      
+      case STAGES.SERVICE_SELECTION:
+        handleServiceSelection(value);
+        break;
+      
+      case STAGES.MOVING_DATE:
+        handleMovingDate(value);
+        break;
+      
+      case STAGES.PEST_DISCLAIMER:
+        handlePestDisclaimer(value);
+        break;
+      
+      case STAGES.LOCATION_FROM:
+        handleLocationFrom(value);
+        break;
+        
+      case STAGES.STAIRS_FROM:
+        handleStairsFrom(value);
+        break;
+        
+      case STAGES.LOCATION_TO:
+        handleLocationTo(value);
+        break;
+        
+      case STAGES.STAIRS_TO:
+        handleStairsTo(value);
+        break;
+        
+      case STAGES.ASK_THIRD_LOCATION:
+        handleThirdLocation(value);
+        break;
+        
+      case STAGES.LOCATION_THIRD:
+        handleLocationThird(value);
+        break;
+        
+      default:
+        console.log('Unhandled stage:', chatState.stage);
+    }
+  }, [
+    chatState.stage, 
+    saveNavigationState, 
+    handleNameInput, 
+    handleServiceSelection, 
+    handleMovingDate,
+    handlePestDisclaimer,
+    handleLocationFrom, 
+    handleStairsFrom,
+    handleLocationTo,
+    handleStairsTo,
+    handleThirdLocation,
+    handleLocationThird
+  ]);
+
+  // Listen for user input from ChatInput via ChatContext
+  useEffect(() => {
+    const handleUserInput = (e) => {
+      if (e.detail && e.detail.message) {
+        console.log('FlowController: Received input:', e.detail.message, 'Stage:', e.detail.stage);
+        processResponse(e.detail.message);
+      }
+    };
+
+    window.addEventListener('process-user-input', handleUserInput);
+    
+    return () => {
+      window.removeEventListener('process-user-input', handleUserInput);
+    };
+  }, [processResponse]);
+
+  // Listen for option selections
+  useEffect(() => {
+    const handleOptionSelect = (e) => {
+      if (e.detail && e.detail.value) {
+        console.log('FlowController: Option selected:', e.detail.value);
+        processResponse(e.detail.value);
+      }
+    };
+
+    window.addEventListener('option-selected', handleOptionSelect);
+    
+    return () => {
+      window.removeEventListener('option-selected', handleOptionSelect);
+    };
+  }, [processResponse]);
+
+  // ChatMessages Component
+  const ChatMessages = () => {
+    return (
+      <div style={{ padding: '20px' }}>
+        {chatState.messages.map((msg) => (
+          <div 
+            key={msg.id} 
+            style={{
+              marginBottom: '15px',
+              padding: '12px 16px',
+              borderRadius: '18px',
+              maxWidth: '80%',
+              wordWrap: 'break-word',
+              animation: 'fadeIn 0.3s ease-in',
+              ...(msg.type === 'bot' ? {
+                background: 'white',
+                color: '#222',
+                marginRight: 'auto',
+                border: '1px solid #e2e8f0',
+                boxShadow: '0 1px 3px rgba(0,0,0,0.08)'
+              } : msg.type === 'user' ? {
+                background: 'linear-gradient(135deg, #004085 0%, #0056b3 100%)',
+                color: 'white',
+                marginLeft: 'auto',
+                boxShadow: '0 1px 3px rgba(0,64,133,0.3)'
+              } : {})
+            }}
+          >
+            {msg.type === 'typing' ? (
+              <div dangerouslySetInnerHTML={{ __html: msg.content }} />
+            ) : (
+              msg.content
+            )}
+          </div>
+        ))}
+      </div>
+    );
+  };
+
+  // DatePicker Component
+  const DatePicker = ({ onDateSelect }) => {
+    const today = new Date().toISOString().split('T')[0];
+    
+    return (
+      <div style={{ padding: '20px', background: 'white', borderTop: '1px solid #e2e8f0' }}>
+        <div style={{ fontWeight: '600', color: '#004085', marginBottom: '15px' }}>
+          Select Your Moving Date
+        </div>
+        <input
+          type="date"
+          min={today}
+          onChange={(e) => {
+            if (e.target.value) {
+              onDateSelect(e.target.value);
+            }
+          }}
+          style={{
+            width: '100%',
+            padding: '12px',
+            border: '2px solid #e2e8f0',
+            borderRadius: '10px',
+            fontSize: '16px'
+          }}
+        />
+      </div>
+    );
+  };
+
+  // PestDisclaimer Component
+  const PestDisclaimer = () => {
+    return (
+      <div style={{ padding: '20px', background: 'white' }}>
+        <div style={{
+          background: '#fee',
+          border: '2px solid #dc3545',
+          borderRadius: '10px',
+          padding: '15px',
+          margin: '15px 0'
+        }}>
+          <div style={{ fontWeight: 'bold', color: '#dc3545', fontSize: '16px', marginBottom: '10px', textAlign: 'center' }}>
+            ⚠️ IMPORTANT PEST CONTROL DISCLAIMER
+          </div>
+          <p>Customer acknowledges that Worry Free Moving LLC is not responsible for the completion of any services if pest infestations are discovered.</p>
+          <button
+            onClick={() => {
+              updateChatData({ 
+                pestDisclaimerAgreed: true,
+                pestDisclaimerTimestamp: new Date().toISOString()
+              });
+              processResponse('continue_after_disclaimer');
+            }}
+            style={{
+              marginTop: '15px',
+              width: '100%',
+              padding: '12px',
+              background: '#28a745',
+              color: 'white',
+              border: 'none',
+              borderRadius: '8px',
+              cursor: 'pointer'
+            }}
+          >
+            I agree to the terms
+          </button>
+        </div>
+      </div>
+    );
+  };
+
+  // Determine which component to render
+  const renderStageComponent = () => {
+    if (chatState.stage === STAGES.MOVING_DATE) {
+      return <DatePicker onDateSelect={processResponse} />;
+    }
+
+    if (chatState.stage === STAGES.PEST_DISCLAIMER) {
+      return <PestDisclaimer />;
+    }
+
+    const inputStages = [
+      STAGES.GET_NAME_INITIAL,
+      STAGES.LOCATION_FROM,
+      STAGES.LOCATION_TO,
+      STAGES.LOCATION_THIRD
+    ];
+
+    if (inputStages.includes(chatState.stage)) {
+      return <ChatInput />;
+    }
+
+    return <ChatOptions />;
+  };
+
+  return (
+    <div style={{
+      display: 'flex',
+      flexDirection: 'column',
+      height: '100%',
+      background: 'white',
+      borderRadius: '15px',
+      overflow: 'hidden'
+    }}>
+      <div style={{ 
+        flexGrow: 1, 
+        overflow: 'auto',
+        background: 'linear-gradient(to bottom, #f8fafb 0%, #f0f4f8 100%)'
+      }}>
+        <ChatMessages />
+      </div>
+      
+      <div style={{ flexShrink: 0 }}>
+        {renderStageComponent()}
+      </div>
+    </div>
+  );
+};
+
+export default FlowController;

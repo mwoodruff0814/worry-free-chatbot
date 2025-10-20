@@ -1,0 +1,39 @@
+// FILE: src/components/App.jsx
+// PURPOSE: Main application component with FlowController integrated
+
+import React, { useEffect } from 'react';
+import { ChatProvider } from '../context/ChatContext';
+import ChatContainer from './Modals/chat/ChatContainer';
+import FlowController from './FlowController';
+import '../styles/global.css';
+import '../styles/chat.css';
+import '../styles/mobile.css';
+
+function App() {
+  // Expose global function to open chat from external button
+  useEffect(() => {
+    window.openWFMChat = () => {
+      const event = new CustomEvent('open-wfm-chat');
+      window.dispatchEvent(event);
+    };
+
+    return () => {
+      delete window.openWFMChat;
+    };
+  }, []);
+
+  return (
+    <ChatProvider>
+      <div className="App">
+        {/* FlowController manages all the conversation logic */}
+        {/* It doesn't render anything visible */}
+        <FlowController />
+        
+        {/* ChatContainer renders the actual chat UI */}
+        <ChatContainer />
+      </div>
+    </ChatProvider>
+  );
+}
+
+export default App;
