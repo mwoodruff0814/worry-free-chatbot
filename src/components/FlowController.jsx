@@ -2294,9 +2294,24 @@ const FlowController = () => {
 
     return <ChatOptions />;
   };
+
+  // Auto-close estimate modal after showing it
+  useEffect(() => {
+    if (showEstimateModal && chatState.stage === STAGES.SHOW_BOOKING_OPTIONS) {
+      const timer = setTimeout(() => {
+        setShowEstimateModal(false);
+        addBotMessage("Perfect! Here are your next steps:", 30);
+      }, 5000); // Close after 5 seconds
+      return () => clearTimeout(timer);
+    }
+  }, [showEstimateModal, chatState.stage, addBotMessage]);
+
   // Handle estimate modal actions
   const handleCloseEstimate = () => {
     setShowEstimateModal(false);
+    if (chatState.stage === STAGES.SHOW_BOOKING_OPTIONS) {
+      addBotMessage("Got it! Here are your next steps:", 30);
+    }
   };
 
   const handleEmailEstimate = async () => {
