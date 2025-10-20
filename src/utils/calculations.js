@@ -247,7 +247,6 @@ export const calculateMovingEstimate = async (data) => {
   const baseRate = RATES.moving.base + (fromDistance * RATES.moving.distanceAdj);
   const hourlyRate = baseRate + ((crewSize - 2) * RATES.moving.crewAdd);
   const baseCost = movingHours * hourlyRate;
-  const serviceCharge = baseCost * RATES.moving.serviceCharge;
 
   // Total hours includes packing for accurate time estimate shown to customer
   const totalHours = movingHours + packingHours;
@@ -278,6 +277,11 @@ export const calculateMovingEstimate = async (data) => {
   if (data.hasThirdLocation) {
     tollCost += Math.max(5, (data.thirdLocationDistance || 0) * RATES.tollCostFactor);
   }
+
+  // Service charge applies to entire bill minus packing supplies (including travel/tolls)
+  const serviceableAmount = baseCost + specialItemFee + heavyItemFees + tvBoxFees +
+                            shopEquipmentFees + oversizedFees + tollCost + stairFee;
+  const serviceCharge = serviceableAmount * RATES.moving.serviceCharge;
 
   let packingMaterialsCost = 0;
   let packingMaterialsItems = [];
